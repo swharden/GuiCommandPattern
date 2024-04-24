@@ -8,11 +8,15 @@ public partial class Form1 : Form
     readonly ScottPlot.Plot MyPlot;
     readonly UiEventManager EventMan;
     readonly Stopwatch SW = Stopwatch.StartNew();
+    readonly System.Windows.Forms.Timer UpdateTimer = new() { Interval = 10 };
 
     public Form1()
     {
         InitializeComponent();
+
         MyPlot = new ScottPlot.Plot();
+        MyPlot.FigureBackground.Color = ScottPlot.Color.FromARGB((uint)SystemColors.Control.ToArgb());
+
         EventMan = new UiEventManager(MyPlot, pictureBox1.Width, pictureBox1.Height);
 
         MyPlot.Add.Signal(ScottPlot.Generate.Sin());
@@ -20,31 +24,48 @@ public partial class Form1 : Form
 
         EventMan.EventAdded += (object? s, UiEvent e) =>
         {
-            lbInteractions.Items.Add($"{SW.Elapsed.TotalSeconds:N2} {e.Name} X={e.X} Y={e.Y}");
-            lbInteractions.SelectedIndex = lbInteractions.Items.Count - 1;
-            groupBox1.Text = $"Events ({EventMan.UnprocessedEventCount})";
+            button1.Text = $"Show Unprocessed Events ({EventMan.UnprocessedEventCount})";
+            button1.Enabled = true;
         };
 
         EventMan.ActionExecuted += (object? sender, IUiResponse actionExecuted) =>
         {
             lblLastAction.Text = $"{SW.Elapsed.TotalSeconds:N2} Executed: {actionExecuted}";
-            lbInteractions.Items.Clear();
-            groupBox1.Text = $"Events ({EventMan.UnprocessedEventCount})";
+            button1.Text = $"Show Unprocessed Events ({EventMan.UnprocessedEventCount})";
+            button1.Enabled = EventMan.UnprocessedEventCount > 0;
             UpdatePlotImage();
         };
 
+        button1.Click += (s, e) =>
+        {
+            new EventsList(EventMan.Events).ShowDialog();
+        };
+
+        UpdateTimer.Tick += (s, e) => UpdatePlotImageIfNeeded();
+
         SetupEventTriggers();
         UpdatePlotImage();
+        UpdateTimer.Start();
     }
 
+    bool RenderNeeded = false;
     private void UpdatePlotImage()
     {
+        RenderNeeded = true;
+    }
+
+    private void UpdatePlotImageIfNeeded()
+    {
+        if (!RenderNeeded)
+            return;
+
         byte[] bytes = MyPlot.GetImageBytes(pictureBox1.Width, pictureBox1.Height);
         using MemoryStream ms = new(bytes);
         Bitmap bmp = new(ms);
         var old = pictureBox1.Image;
         pictureBox1.Image = bmp;
         old?.Dispose();
+        RenderNeeded = false;
     }
 
     private void SetupEventTriggers()

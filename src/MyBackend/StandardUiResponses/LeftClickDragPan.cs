@@ -1,29 +1,26 @@
-﻿namespace MyBackend.StandardUiResponses;
+﻿using ScottPlot;
+
+namespace MyBackend.StandardUiResponses;
 
 public class LeftClickDragPan : IUiResponse
 {
-    public bool WillExecute(List<UiEvent> uiEvents, ScottPlot.Plot plot, ControlInfo control)
+    public bool WillExecute(List<UiEvent> uiEvents, ScottPlot.Plot plot, ControlInfo control, AxisLimits originalLimits)
     {
-        bool hasMouseDown = uiEvents.First().Name == "left button down";
-        bool hasMouseUp = uiEvents.Last().Name == "left button up";
-        bool isDragAndDrop = hasMouseDown && hasMouseUp;
-        if (!isDragAndDrop)
-            return false;
-
-        double dragX = uiEvents.Last().X - uiEvents.First().X;
-        double dragY = uiEvents.Last().X - uiEvents.First().X;
-        bool moved = dragX != 0 && dragY != 0;
-        return moved;
+        return (uiEvents.Count >= 2) 
+            && uiEvents[0].Name == "left button down" 
+            && uiEvents[1].Name == "mouse move";
     }
 
-    public void Execute(List<UiEvent> uiEvents, ScottPlot.Plot plot, ControlInfo control)
+    public void Execute(List<UiEvent> uiEvents, ScottPlot.Plot plot, ControlInfo control, AxisLimits originalLimits)
     {
         double dragX = uiEvents.Last().X - uiEvents.First().X;
         double dragY = uiEvents.Last().Y - uiEvents.First().Y;
-
         ScottPlot.PixelOffset offset = new(-(float)dragX, (float)dragY);
+
+        plot.Axes.SetLimits(originalLimits);
         plot.Axes.Pan(offset);
 
-        uiEvents.Clear();
+        if (uiEvents.Last().Name == "left button up")
+            uiEvents.Clear();
     }
 }

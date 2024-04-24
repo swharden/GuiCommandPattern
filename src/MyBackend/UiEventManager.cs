@@ -1,4 +1,6 @@
-﻿namespace MyBackend;
+﻿using ScottPlot;
+
+namespace MyBackend;
 
 public class UiEventManager(ScottPlot.Plot plot, float controlWidth, float controlHeight)
 {
@@ -51,6 +53,7 @@ public class UiEventManager(ScottPlot.Plot plot, float controlWidth, float contr
         WatchMouseMoves = true;
         LastMouseX = x;
         LastMouseY = y;
+        OriginalLimits = Plot.Axes.GetLimits();
     }
 
     public void AddRightDown(double x, double y)
@@ -59,6 +62,7 @@ public class UiEventManager(ScottPlot.Plot plot, float controlWidth, float contr
         WatchMouseMoves = true;
         LastMouseX = x;
         LastMouseY = y;
+        OriginalLimits = Plot.Axes.GetLimits();
     }
 
     public void AddLeftUp(double x, double y)
@@ -83,6 +87,7 @@ public class UiEventManager(ScottPlot.Plot plot, float controlWidth, float contr
         AddCustom("scroll wheel down", x, y);
     }
 
+    private AxisLimits OriginalLimits;
     private double LastMouseX = double.NaN;
     private double LastMouseY = double.NaN;
     private bool WatchMouseMoves = false;
@@ -109,9 +114,9 @@ public class UiEventManager(ScottPlot.Plot plot, float controlWidth, float contr
         ControlInfo info = new(ControlWidth, ControlHeight);
         foreach (IUiResponse response in Responses)
         {
-            if (response.WillExecute(Events, Plot, info))
+            if (response.WillExecute(Events, Plot, info, OriginalLimits))
             {
-                response.Execute(Events, Plot, info);
+                response.Execute(Events, Plot, info, OriginalLimits);
                 ActionExecuted.Invoke(this, response);
                 if (Events.Count == 0)
                     return;
