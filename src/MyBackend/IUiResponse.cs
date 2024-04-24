@@ -5,6 +5,6 @@
 /// </summary>
 public interface IUiResponse
 {
-    public bool WillExecute(List<UiEvent> uiEvents, Plot plot, ControlInfo control);
-    public void Execute(List<UiEvent> uiEvents, Plot plot, ControlInfo control);
+    public bool WillExecute(List<UiEvent> uiEvents, ScottPlot.Plot plot, ControlInfo control);
+    public void Execute(List<UiEvent> uiEvents, ScottPlot.Plot plot, ControlInfo control);
 }

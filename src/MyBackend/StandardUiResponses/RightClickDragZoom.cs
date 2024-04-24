@@ -2,7 +2,7 @@
 
 public class RightClickDragPan : IUiResponse
 {
-    public bool WillExecute(List<UiEvent> uiEvents, Plot plot, ControlInfo control)
+    public bool WillExecute(List<UiEvent> uiEvents, ScottPlot.Plot plot, ControlInfo control)
     {
         bool hasMouseDown = uiEvents.First().Name == "right button down";
         bool hasMouseUp = uiEvents.Last().Name == "right button up";
@@ -16,21 +16,18 @@ public class RightClickDragPan : IUiResponse
         return moved;
     }
 
-    public void Execute(List<UiEvent> uiEvents, Plot plot, ControlInfo control)
+    public void Execute(List<UiEvent> uiEvents, ScottPlot.Plot plot, ControlInfo control)
     {
         double dragX = uiEvents.Last().X - uiEvents.First().X;
         double dragY = uiEvents.Last().X - uiEvents.First().X;
 
-        double fracX = Math.Abs(dragX) / control.Width;
-        double fracY = Math.Abs(dragY) / control.Height;
+        double deltaPx = Math.Max(dragX, dragY);
+        double dataSizePx = dragX > dragY ? control.Width : control.Height;
 
-        if (fracX < 0)
-            fracX = 1.0 / fracX;
+        double deltaFracX = deltaPx / (Math.Abs(deltaPx) + dataSizePx);
+        double frac = Math.Pow(10, deltaFracX);
+        plot.Axes.Zoom(frac);
 
-        if (fracY < 0)
-            fracY = 1.0 / fracY;
-
-        plot.Zoom(fracX, fracY);
         uiEvents.Clear();
     }
 }
