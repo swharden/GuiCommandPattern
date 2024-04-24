@@ -2,6 +2,7 @@
 
 public readonly struct UiEvent(string name, double x, double y)
 {
+    public DateTime DateTime { get; } = DateTime.Now;
     public string Name { get; } = name;
     public double X { get; } = x;
     public double Y { get; } = y;

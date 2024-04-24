@@ -1,15 +1,15 @@
 ﻿using ScottPlot;
 
-namespace MyBackend.StandardUiResponses;
+namespace MyBackend.UiActions;
 
-public class ScrollWheelZoom : IUiResponse
+public class ScrollWheelZoom : IUiAction
 {
-    public bool WillExecute(List<UiEvent> uiEvents, ScottPlot.Plot plot, ControlInfo control, AxisLimits originalLimits)
+    public bool WillExecute(List<UiEvent> uiEvents, ScottPlot.Plot plot, PixelSize controlSize, AxisLimits originalLimits)
     {
         return uiEvents.Last().Name.StartsWith("scroll wheel");
     }
 
-    public void Execute(List<UiEvent> uiEvents, ScottPlot.Plot plot, ControlInfo control, AxisLimits originalLimits)
+    public void Execute(List<UiEvent> uiEvents, ScottPlot.Plot plot, PixelSize controlSize, AxisLimits originalLimits)
     {
         double frac = 0.2;
 

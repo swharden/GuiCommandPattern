@@ -2,7 +2,7 @@
 
 namespace MyBackend;
 
-public class UiEventManager(ScottPlot.Plot plot, float controlWidth, float controlHeight)
+public class UiEventManager(Plot plot, float controlWidth, float controlHeight)
 {
     public float ControlWidth { get; set; } = controlWidth;
     public float ControlHeight { get; set; } = controlHeight;
@@ -15,24 +15,23 @@ public class UiEventManager(ScottPlot.Plot plot, float controlWidth, float contr
     public int UnprocessedEventCount => Events.Count;
 
     public EventHandler<UiEvent> EventAdded { get; set; } = delegate { };
-    public EventHandler<IUiResponse> ActionExecuted { get; set; } = delegate { };
-
-    /// <summary>
-    /// A list of rules for how to respond to UI events,
-    /// in the order they will be applied.
-    /// </summary>
-    public List<IUiResponse> Responses { get; } =
-    [
-        new StandardUiResponses.LeftClickDragPan(),
-        new StandardUiResponses.RightClickDragPan(),
-        new StandardUiResponses.ScrollWheelZoom(),
-        new StandardUiResponses.SingleLeftClick(),
-    ];
+    public EventHandler<IUiAction> ActionExecuted { get; set; } = delegate { };
 
     /// <summary>
     /// The plot which will be modified by responses
     /// </summary>
-    private ScottPlot.Plot Plot { get; } = plot;
+    private Plot Plot { get; } = plot;
+
+    /// <summary>
+    /// Rules for how to respond to UI events in the order they will be applied.
+    /// </summary>
+    public List<IUiAction> UiActions { get; } =
+    [
+        new UiActions.LeftClickDragPan(),
+        new UiActions.RightClickDragPan(),
+        new UiActions.ScrollWheelZoom(),
+        new UiActions.SingleLeftClick(),
+    ];
 
     public void Add(UiEvent uiEvent)
     {
@@ -111,12 +110,12 @@ public class UiEventManager(ScottPlot.Plot plot, float controlWidth, float contr
     /// </summary>
     private void ProcessEvents()
     {
-        ControlInfo info = new(ControlWidth, ControlHeight);
-        foreach (IUiResponse response in Responses)
+        PixelSize controlSize = new(ControlWidth, ControlHeight);
+        foreach (IUiAction response in UiActions)
         {
-            if (response.WillExecute(Events, Plot, info, OriginalLimits))
+            if (response.WillExecute(Events, Plot, controlSize, OriginalLimits))
             {
-                response.Execute(Events, Plot, info, OriginalLimits);
+                response.Execute(Events, Plot, controlSize, OriginalLimits);
                 ActionExecuted.Invoke(this, response);
                 if (Events.Count == 0)
                     return;

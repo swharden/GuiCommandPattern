@@ -28,7 +28,7 @@ public partial class Form1 : Form
             button1.Enabled = true;
         };
 
-        EventMan.ActionExecuted += (object? sender, IUiResponse actionExecuted) =>
+        EventMan.ActionExecuted += (object? sender, IUiAction actionExecuted) =>
         {
             lblLastAction.Text = $"{SW.Elapsed.TotalSeconds:N2} Executed: {actionExecuted}";
             button1.Text = $"Show Unprocessed Events ({EventMan.UnprocessedEventCount})";
