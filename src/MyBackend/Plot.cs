@@ -11,11 +11,27 @@ public class Plot
     public double Bottom { get; private set; } = -10;
     public double Top { get; private set; } = 10;
 
+    public double CenterX => (Left + Right) / 2;
+    public double CenterY => (Bottom + Top) / 2;
+    public double Width => Right - Left;
+    public double Height => Top - Bottom;
+
     public void Pan(double x, double y)
     {
         Left += x;
         Right += x;
         Bottom += y;
         Top += y;
+    }
+
+    public Plot Clone()
+    {
+        return new Plot()
+        {
+            Left = Left,
+            Right = Right,
+            Bottom = Bottom,
+            Top = Top,
+        };
     }
 }

@@ -30,10 +30,25 @@ public class UiEventManager(Plot plot)
             ProcessEvents();
     }
 
-    public void Add(string name, double x, double y, bool process = true)
+    public void AddCustom(string name, double x, double y, bool process = true)
     {
         UiEvent uiEvent = new(name, x, y);
         Add(uiEvent, process);
+    }
+
+    public void AddLeftDown(double x, double y)
+    {
+        AddCustom("left button down", x, y);
+    }
+
+    public void AddLeftUp(double x, double y)
+    {
+        AddCustom("left button up", x, y);
+    }
+
+    public void AddMouseMove(double x, double y)
+    {
+        AddCustom("mouse move", x, y);
     }
 
     /// <summary>

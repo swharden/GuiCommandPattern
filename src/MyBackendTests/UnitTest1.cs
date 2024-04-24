@@ -1,3 +1,4 @@
+using FluentAssertions;
 using MyBackend;
 
 namespace MyBackendTests;
@@ -7,13 +8,17 @@ public class Tests
     [Test]
     public void Test_Pan()
     {
-        Plot plot = new();
-        UiEventManager eventMan = new(plot);
-        Assert.That(plot.Right, Is.EqualTo(10));
+        Plot originalPlot = new();
+        Plot testPlot = originalPlot.Clone();
 
-        eventMan.Add("left button down", 111, 222);
-        eventMan.Add("mouse move", 123, 234);
-        eventMan.Add("left button up", 222, 333);
-        Assert.That(plot.Right, Is.GreaterThan(10));
+        UiEventManager eventMan = new(testPlot);
+        eventMan.AddLeftDown(111, 222);
+        eventMan.AddMouseMove(123, 234);
+        eventMan.AddLeftUp(222, 333);
+
+        testPlot.CenterX.Should().BeGreaterThan(originalPlot.CenterX);
+        testPlot.CenterY.Should().BeGreaterThan(originalPlot.CenterY);
+        testPlot.Width.Should().Be(originalPlot.Width);
+        testPlot.Height.Should().Be(originalPlot.Height);
     }
 }
