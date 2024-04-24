@@ -2,6 +2,8 @@
 
 public class UiEventManager(Plot plot)
 {
+    public ControlInfo ControlInfo { get; set; } = new(600, 400);
+
     /// <summary>
     /// A growing list of UI inputs.
     /// The list is cleared when action is taken.
@@ -15,6 +17,7 @@ public class UiEventManager(Plot plot)
     public List<IUiResponse> Responses { get; } =
     [
         new StandardUiResponses.LeftClickDragPan(),
+        new StandardUiResponses.RightClickDragPan(),
     ];
 
     /// <summary>
@@ -41,9 +44,19 @@ public class UiEventManager(Plot plot)
         AddCustom("left button down", x, y);
     }
 
+    public void AddRightDown(double x, double y)
+    {
+        AddCustom("right button down", x, y);
+    }
+
     public void AddLeftUp(double x, double y)
     {
         AddCustom("left button up", x, y);
+    }
+
+    public void AddRightUp(double x, double y)
+    {
+        AddCustom("right button up", x, y);
     }
 
     public void AddMouseMove(double x, double y)
@@ -59,8 +72,8 @@ public class UiEventManager(Plot plot)
     {
         foreach (IUiResponse response in Responses)
         {
-            if (response.WillExecute(Events, Plot))
-                response.Execute(Events, Plot);
+            if (response.WillExecute(Events, Plot, ControlInfo))
+                response.Execute(Events, Plot, ControlInfo);
         }
     }
 }
