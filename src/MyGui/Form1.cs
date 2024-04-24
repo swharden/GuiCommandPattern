@@ -1,4 +1,5 @@
 using MyBackend;
+using System;
 using System.Diagnostics;
 
 namespace MyGui;
@@ -6,7 +7,7 @@ namespace MyGui;
 public partial class Form1 : Form
 {
     readonly ScottPlot.Plot MyPlot;
-    readonly UiEventManager EventMan;
+    readonly UserInputQueue EventMan;
     readonly Stopwatch SW = Stopwatch.StartNew();
     readonly System.Windows.Forms.Timer UpdateTimer = new() { Interval = 10 };
 
@@ -17,20 +18,20 @@ public partial class Form1 : Form
         MyPlot = new ScottPlot.Plot();
         MyPlot.FigureBackground.Color = ScottPlot.Color.FromARGB((uint)SystemColors.Control.ToArgb());
 
-        EventMan = new UiEventManager(MyPlot, pictureBox1.Width, pictureBox1.Height);
+        EventMan = new UserInputQueue(MyPlot, pictureBox1.Width, pictureBox1.Height);
 
         MyPlot.Add.Signal(ScottPlot.Generate.Sin());
         MyPlot.Add.Signal(ScottPlot.Generate.Cos());
 
-        EventMan.EventAdded += (object? s, UiEvent e) =>
+        EventMan.EventAdded += (object? s, UserInputEvent e) =>
         {
             button1.Text = $"Show Unprocessed Events ({EventMan.UnprocessedEventCount})";
             button1.Enabled = true;
         };
 
-        EventMan.ActionExecuted += (object? sender, IUiAction actionExecuted) =>
+        EventMan.ActionExecuted += (object? sender, (IUserAction action, UserActionResult result) e) =>
         {
-            lblLastAction.Text = $"{SW.Elapsed.TotalSeconds:N2} Executed: {actionExecuted}";
+            lblLastAction.Text = $"{SW.Elapsed.TotalSeconds:N2} Executed: {e.action}";
             button1.Text = $"Show Unprocessed Events ({EventMan.UnprocessedEventCount})";
             button1.Enabled = EventMan.UnprocessedEventCount > 0;
             UpdatePlotImage();

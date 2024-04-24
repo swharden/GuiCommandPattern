@@ -2,20 +2,21 @@
 
 namespace MyBackend;
 
-public class UiEventManager(Plot plot, float controlWidth, float controlHeight)
+public class UserInputQueue(Plot plot, float controlWidth, float controlHeight)
 {
     public float ControlWidth { get; set; } = controlWidth;
     public float ControlHeight { get; set; } = controlHeight;
+    PixelSize ControlSize => new(ControlWidth, ControlHeight);
 
     /// <summary>
     /// A growing list of UI inputs.
     /// The list is cleared when action is taken.
     /// </summary>
-    public List<UiEvent> Events { get; } = [];
+    public List<UserInputEvent> Events { get; } = [];
     public int UnprocessedEventCount => Events.Count;
 
-    public EventHandler<UiEvent> EventAdded { get; set; } = delegate { };
-    public EventHandler<IUiAction> ActionExecuted { get; set; } = delegate { };
+    public EventHandler<UserInputEvent> EventAdded { get; set; } = delegate { };
+    public EventHandler<(IUserAction action, UserActionResult result)> ActionExecuted { get; set; } = delegate { };
 
     /// <summary>
     /// The plot which will be modified by responses
@@ -25,28 +26,28 @@ public class UiEventManager(Plot plot, float controlWidth, float controlHeight)
     /// <summary>
     /// Rules for how to respond to UI events in the order they will be applied.
     /// </summary>
-    public List<IUiAction> UiActions { get; } =
+    public List<IUserAction> UserActions { get; } =
     [
-        new UiActions.LeftClickDragPan(),
-        new UiActions.RightClickDragPan(),
-        new UiActions.ScrollWheelZoom(),
-        new UiActions.SingleLeftClick(),
+        new UserActions.LeftClickDragPan(),
+        new UserActions.RightClickDragZoom(),
+        new UserActions.ScrollWheelZoom(),
+        new UserActions.SingleLeftClick(),
     ];
 
-    public void Add(UiEvent uiEvent)
+    public void Add(UserInputEvent uiEvent)
     {
         Events.Add(uiEvent);
         EventAdded.Invoke(this, uiEvent);
         ProcessEvents();
     }
 
-    public void AddCustom(string name, double x, double y)
+    public void AddCustom(string name, float x, float y)
     {
-        UiEvent uiEvent = new(name, x, y);
+        UserInputEvent uiEvent = new(name, x, y);
         Add(uiEvent);
     }
 
-    public void AddLeftDown(double x, double y)
+    public void AddLeftDown(float x, float y)
     {
         AddCustom("left button down", x, y);
         WatchMouseMoves = true;
@@ -55,7 +56,7 @@ public class UiEventManager(Plot plot, float controlWidth, float controlHeight)
         OriginalLimits = Plot.Axes.GetLimits();
     }
 
-    public void AddRightDown(double x, double y)
+    public void AddRightDown(float x, float y)
     {
         AddCustom("right button down", x, y);
         WatchMouseMoves = true;
@@ -64,24 +65,24 @@ public class UiEventManager(Plot plot, float controlWidth, float controlHeight)
         OriginalLimits = Plot.Axes.GetLimits();
     }
 
-    public void AddLeftUp(double x, double y)
+    public void AddLeftUp(float x, float y)
     {
         AddCustom("left button up", x, y);
         WatchMouseMoves = false;
     }
 
-    public void AddRightUp(double x, double y)
+    public void AddRightUp(float x, float y)
     {
         AddCustom("right button up", x, y);
         WatchMouseMoves = false;
     }
 
-    public void AddScrollUp(double x, double y)
+    public void AddScrollUp(float x, float y)
     {
         AddCustom("scroll wheel up", x, y);
     }
 
-    public void AddScrollDown(double x, double y)
+    public void AddScrollDown(float x, float y)
     {
         AddCustom("scroll wheel down", x, y);
     }
@@ -91,7 +92,7 @@ public class UiEventManager(Plot plot, float controlWidth, float controlHeight)
     private double LastMouseY = double.NaN;
     private bool WatchMouseMoves = false;
 
-    public void AddMouseMove(double x, double y)
+    public void AddMouseMove(float x, float y)
     {
         if (!WatchMouseMoves)
             return;
@@ -110,15 +111,25 @@ public class UiEventManager(Plot plot, float controlWidth, float controlHeight)
     /// </summary>
     private void ProcessEvents()
     {
-        PixelSize controlSize = new(ControlWidth, ControlHeight);
-        foreach (IUiAction response in UiActions)
+        UserActionInput input = new([.. Events], Plot, ControlSize, OriginalLimits);
+
+        foreach (IUserAction action in UserActions)
         {
-            if (response.WillExecute(Events, Plot, controlSize, OriginalLimits))
+            UserActionResult result = action.Execute(input);
+
+            if (result == UserActionResult.NoAction)
             {
-                response.Execute(Events, Plot, controlSize, OriginalLimits);
-                ActionExecuted.Invoke(this, response);
-                if (Events.Count == 0)
-                    return;
+                continue;
+            }
+            else if (result == UserActionResult.ActionTaken)
+            {
+                ActionExecuted.Invoke(this, (action, result));
+            }
+            else if (result == UserActionResult.FinalActionTaken)
+            {
+                Events.Clear();
+                ActionExecuted.Invoke(this, (action, result));
+                return;
             }
         }
     }

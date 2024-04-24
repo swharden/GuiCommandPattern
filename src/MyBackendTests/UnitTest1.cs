@@ -11,7 +11,7 @@ public class Tests
         Plot originalPlot = new();
         Plot testPlot = originalPlot.Clone();
 
-        UiEventManager eventMan = new(testPlot);
+        UserInputQueue eventMan = new(testPlot);
         eventMan.AddLeftDown(111, 222);
         eventMan.AddMouseMove(123, 234);
         eventMan.AddLeftUp(222, 333);
@@ -28,7 +28,7 @@ public class Tests
         Plot originalPlot = new();
         Plot testPlot = originalPlot.Clone();
 
-        UiEventManager eventMan = new(testPlot);
+        UserInputQueue eventMan = new(testPlot);
         eventMan.AddRightDown(111, 222);
         eventMan.AddMouseMove(123, 234);
         eventMan.AddRightUp(222, 333);

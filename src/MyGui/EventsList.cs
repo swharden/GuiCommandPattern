@@ -1,13 +1,14 @@
 ﻿using MyBackend;
 
 namespace MyGui;
+
 public partial class EventsList : Form
 {
-    public EventsList(IEnumerable<UiEvent> events)
+    public EventsList(IEnumerable<UserInputEvent> events)
     {
         InitializeComponent();
 
-        foreach (UiEvent e in events)
+        foreach (UserInputEvent e in events)
         {
             listBox1.Items.Add(e.ToString());
         }
