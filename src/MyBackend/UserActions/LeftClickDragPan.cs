@@ -15,8 +15,9 @@ public class LeftClickDragPan : IUserAction
         state.Plot.Axes.Pan(state.MouseDelta);
 
         bool dragFinished = state.LastEvent.Name == "left button up";
-        return dragFinished
-            ? UserActionResult.FinalActionTaken
-            : UserActionResult.ActionTaken;
+
+        return dragFinished 
+            ? UserActionResult.FinalActionApplied 
+            : UserActionResult.ActionApplied;
     }
 }

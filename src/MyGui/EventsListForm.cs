@@ -2,9 +2,9 @@
 
 namespace MyGui;
 
-public partial class EventsList : Form
+public partial class EventsListForm : Form
 {
-    public EventsList(IEnumerable<UserInputEvent> events)
+    public EventsListForm(IEnumerable<UserInputEvent> events)
     {
         InitializeComponent();
 

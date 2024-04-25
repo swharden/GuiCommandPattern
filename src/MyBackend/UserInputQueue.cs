@@ -1,4 +1,5 @@
 ﻿using ScottPlot;
+using System.Diagnostics;
 
 namespace MyBackend;
 
@@ -32,77 +33,65 @@ public class UserInputQueue(Plot plot, float controlWidth, float controlHeight)
         new UserActions.RightClickDragZoom(),
         new UserActions.ScrollWheelZoom(),
         new UserActions.SingleLeftClick(),
+        new UserActions.MiddleClickAutoScale(),
     ];
+
+    public void Clear()
+    {
+        Events.Clear();
+    }
+
+    public void Remove<T>()
+    {
+        IUserAction[] matchingActions = UserActions.Where(x => x is T).ToArray();
+
+        foreach (IUserAction action in matchingActions)
+        {
+            UserActions.Remove(action);
+        }
+    }
 
     public void Add(UserInputEvent uiEvent)
     {
+        if (Events.Count == 0)
+        {
+            MouseStartPixel = new(uiEvent.X, uiEvent.Y);
+            OriginalLimits = Plot.Axes.GetLimits();
+        }
+
         Events.Add(uiEvent);
         EventAdded.Invoke(this, uiEvent);
         ProcessEvents();
     }
 
-    public void AddCustom(string name, float x, float y)
-    {
-        UserInputEvent uiEvent = new(name, x, y);
-        Add(uiEvent);
-    }
+    public void Add(string name, float x, float y) => Add(new UserInputEvent(name, x, y));
+    public void AddLeftDown(float x, float y) => Add("left button down", x, y);
+    public void AddLeftUp(float x, float y) => Add("left button up", x, y);
+    public void AddRightDown(float x, float y) => Add("right button down", x, y);
+    public void AddRightUp(float x, float y) => Add("right button up", x, y);
+    public void AddMiddleDown(float x, float y) => Add("middle button down", x, y);
+    public void AddMiddleUp(float x, float y) => Add("middle button up", x, y);
+    public void AddScrollDown(float x, float y) => Add("scroll wheel down", x, y);
+    public void AddScrollUp(float x, float y) => Add("scroll wheel up", x, y);
 
-    public void AddLeftDown(float x, float y)
-    {
-        AddCustom("left button down", x, y);
-        WatchMouseMoves = true;
-        LastMouseX = x;
-        LastMouseY = y;
-        OriginalLimits = Plot.Axes.GetLimits();
-    }
 
-    public void AddRightDown(float x, float y)
-    {
-        AddCustom("right button down", x, y);
-        WatchMouseMoves = true;
-        LastMouseX = x;
-        LastMouseY = y;
-        OriginalLimits = Plot.Axes.GetLimits();
-    }
-
-    public void AddLeftUp(float x, float y)
-    {
-        AddCustom("left button up", x, y);
-        WatchMouseMoves = false;
-    }
-
-    public void AddRightUp(float x, float y)
-    {
-        AddCustom("right button up", x, y);
-        WatchMouseMoves = false;
-    }
-
-    public void AddScrollUp(float x, float y)
-    {
-        AddCustom("scroll wheel up", x, y);
-    }
-
-    public void AddScrollDown(float x, float y)
-    {
-        AddCustom("scroll wheel down", x, y);
-    }
-
-    private AxisLimits OriginalLimits;
-    private double LastMouseX = double.NaN;
-    private double LastMouseY = double.NaN;
-    private bool WatchMouseMoves = false;
+    private AxisLimits OriginalLimits = AxisLimits.NoLimits;
+    private Pixel MouseStartPixel = Pixel.NaN;
+    private bool MouseMovementIsTracked => !float.IsNaN(MouseStartPixel.X);
 
     public void AddMouseMove(float x, float y)
     {
-        if (!WatchMouseMoves)
+        if (!MouseMovementIsTracked)
             return;
 
-        if (x == LastMouseX && y == LastMouseY)
+        bool positionUnchangedFromLastEvent = Events.Count > 0
+            && Events.Last().X == x
+            && Events.Last().Y == y;
+
+        if (positionUnchangedFromLastEvent)
             return;
 
-        AddCustom("mouse move", x, y);
-        LastMouseX = x;
-        LastMouseY = y;
+        Add("mouse move", x, y);
     }
 
     /// <summary>
@@ -117,20 +106,18 @@ public class UserInputQueue(Plot plot, float controlWidth, float controlHeight)
         {
             UserActionResult result = action.Execute(input);
 
-            if (result == UserActionResult.NoAction)
-            {
+            if (result.ActionSkipped)
                 continue;
-            }
-            else if (result == UserActionResult.ActionTaken)
-            {
-                ActionExecuted.Invoke(this, (action, result));
-            }
-            else if (result == UserActionResult.FinalActionTaken)
+
+            if (result.ClearEvents)
             {
                 Events.Clear();
+                MouseStartPixel = Pixel.NaN;
                 ActionExecuted.Invoke(this, (action, result));
                 return;
             }
+
+            ActionExecuted.Invoke(this, (action, result));
         }
     }
 }

@@ -12,9 +12,8 @@ public class SingleLeftClick : IUserAction
             return UserActionResult.NoAction;
 
         TimeSpan clickSpan = state.LastEvent.DateTime - state.FirstEvent.DateTime;
-        // TODO: distinguish from double-click by distance from previous click?
 
-        state.Plot.Title($"Clicked {Random.Shared.Next(9999)}");
-        return UserActionResult.FinalActionTaken;
+        state.Plot.Title($"Clicked for {clickSpan.TotalMilliseconds:N0} milliseconds");
+        return UserActionResult.FinalActionApplied;
     }
 }

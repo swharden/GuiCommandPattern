@@ -24,7 +24,7 @@ public class RightClickDragZoom : IUserAction
 
         bool dragFinished = state.LastEvent.Name == "right button up";
         return dragFinished
-            ? UserActionResult.FinalActionTaken
-            : UserActionResult.ActionTaken;
+            ? UserActionResult.FinalActionApplied
+            : UserActionResult.ActionApplied;
     }
 }

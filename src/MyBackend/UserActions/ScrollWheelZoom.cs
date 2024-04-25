@@ -1,6 +1,4 @@
-﻿using ScottPlot;
-
-namespace MyBackend.UserActions;
+﻿namespace MyBackend.UserActions;
 
 public class ScrollWheelZoom : IUserAction
 {
@@ -20,6 +18,6 @@ public class ScrollWheelZoom : IUserAction
             state.Plot.Axes.Zoom(1 - frac, 1 - frac);
         }
 
-        return UserActionResult.FinalActionTaken;
+        return UserActionResult.FinalActionApplied;
     }
 }

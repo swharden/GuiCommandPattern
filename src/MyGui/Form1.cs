@@ -1,5 +1,4 @@
 using MyBackend;
-using System;
 using System.Diagnostics;
 
 namespace MyGui;
@@ -7,8 +6,7 @@ namespace MyGui;
 public partial class Form1 : Form
 {
     readonly ScottPlot.Plot MyPlot;
-    readonly UserInputQueue EventMan;
-    readonly Stopwatch SW = Stopwatch.StartNew();
+    readonly UserInputQueue UserInputQueue;
     readonly System.Windows.Forms.Timer UpdateTimer = new() { Interval = 10 };
 
     public Form1()
@@ -18,29 +16,29 @@ public partial class Form1 : Form
         MyPlot = new ScottPlot.Plot();
         MyPlot.FigureBackground.Color = ScottPlot.Color.FromARGB((uint)SystemColors.Control.ToArgb());
 
-        EventMan = new UserInputQueue(MyPlot, pictureBox1.Width, pictureBox1.Height);
+        UserInputQueue = new UserInputQueue(MyPlot, pictureBox1.Width, pictureBox1.Height);
 
         MyPlot.Add.Signal(ScottPlot.Generate.Sin());
         MyPlot.Add.Signal(ScottPlot.Generate.Cos());
 
-        EventMan.EventAdded += (object? s, UserInputEvent e) =>
+        UserInputQueue.EventAdded += (object? s, UserInputEvent e) =>
         {
-            button1.Text = $"Show Unprocessed Events ({EventMan.UnprocessedEventCount})";
-            button1.Enabled = true;
+            lblLastEvent.Text = $"Event #{UserInputQueue.UnprocessedEventCount}: {e}";
+            gbEvents.Enabled = true;
         };
 
-        EventMan.ActionExecuted += (object? sender, (IUserAction action, UserActionResult result) e) =>
+        int Executions = 0;
+        UserInputQueue.ActionExecuted += (object? sender, (IUserAction action, UserActionResult result) e) =>
         {
-            lblLastAction.Text = $"{SW.Elapsed.TotalSeconds:N2} Executed: {e.action}";
-            button1.Text = $"Show Unprocessed Events ({EventMan.UnprocessedEventCount})";
-            button1.Enabled = EventMan.UnprocessedEventCount > 0;
+            string suffix = e.result.ClearEvents ? "and cleared event list" : "";
+            lblLastAction.Text = $"Executed action {++Executions} {e.action} {suffix}";
+            gbEvents.Enabled = UserInputQueue.UnprocessedEventCount > 0;
             UpdatePlotImage();
         };
 
-        button1.Click += (s, e) =>
-        {
-            new EventsList(EventMan.Events).ShowDialog();
-        };
+        btnShowEvents.Click += (s, e) => new EventsListForm(UserInputQueue.Events).ShowDialog();
+
+        btnClearEvents.Click += (s, e) => UserInputQueue.Clear();
 
         UpdateTimer.Tick += (s, e) => UpdatePlotImageIfNeeded();
 
@@ -73,18 +71,22 @@ public partial class Form1 : Form
     {
         pictureBox1.MouseMove += (s, e) =>
         {
-            EventMan.AddMouseMove(e.X, e.Y);
+            UserInputQueue.AddMouseMove(e.X, e.Y);
         };
 
         pictureBox1.MouseDown += (s, e) =>
         {
             if (e.Button == MouseButtons.Left)
             {
-                EventMan.AddLeftDown(e.X, e.Y);
+                UserInputQueue.AddLeftDown(e.X, e.Y);
             }
             else if (e.Button == MouseButtons.Right)
             {
-                EventMan.AddRightDown(e.X, e.Y);
+                UserInputQueue.AddRightDown(e.X, e.Y);
+            }
+            else if (e.Button == MouseButtons.Middle)
+            {
+                UserInputQueue.AddMiddleDown(e.X, e.Y);
             }
         };
 
@@ -92,20 +94,24 @@ public partial class Form1 : Form
         {
             if (e.Button == MouseButtons.Left)
             {
-                EventMan.AddLeftUp(e.X, e.Y);
+                UserInputQueue.AddLeftUp(e.X, e.Y);
             }
             else if (e.Button == MouseButtons.Right)
             {
-                EventMan.AddRightUp(e.X, e.Y);
+                UserInputQueue.AddRightUp(e.X, e.Y);
+            }
+            else if (e.Button == MouseButtons.Middle)
+            {
+                UserInputQueue.AddMiddleUp(e.X, e.Y);
             }
         };
 
         pictureBox1.MouseWheel += (s, e) =>
         {
             if (e.Delta < 0)
-                EventMan.AddScrollDown(e.X, e.Y);
+                UserInputQueue.AddScrollDown(e.X, e.Y);
             else
-                EventMan.AddScrollUp(e.X, e.Y);
+                UserInputQueue.AddScrollUp(e.X, e.Y);
         };
 
         KeyPreview = true;

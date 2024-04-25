@@ -1,6 +1,6 @@
 ﻿namespace MyGui;
 
-partial class EventsList
+partial class EventsListForm
 {
     /// <summary>
     /// Required designer variable.
